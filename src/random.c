@@ -61,8 +61,8 @@ int main(void){
 		return -1;
 	}
 	
-	fseek(maze, 116, SEEK_SET);
-	fprintf(maze, "#define KEY \"%s\"\r\n#endif\r\n", key);
+	fseek(maze, 130, SEEK_SET);
+	fprintf(maze, "%s", key);
 	fclose(maze);
 	
 	/* The same for Servrian */
@@ -73,8 +73,8 @@ int main(void){
 	}
 	
 	/* Check if file could be opened */
-	fseek(servrian, 116, SEEK_SET);
-	fprintf(servrian, "#define KEY \"%s\"\r\n#endif\r\n", key);
+	fseek(servrian, 130, SEEK_SET);
+	fprintf(servrian, "%s", key);
 	fclose(servrian);
 	
 	return 0;
