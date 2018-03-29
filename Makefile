@@ -22,6 +22,7 @@ $(KEYGENDIR)/$(KEYGEN): src/*.c
 # build projects
 all: 
 	@echo "Building projects."
+	test ! -d build; then VER = $(cat build); fi
 	@echo "	Create backups of key.h"
 	cp ../Maze/include/key{.h,-old.h}
 	cp ../Servrian/include/key{.h,-old.h}
