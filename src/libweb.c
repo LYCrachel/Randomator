@@ -1,9 +1,10 @@
 /*
  * ****************************************************************************
  *
- * PROJECT:	 Maze: A simple HTTP 1.1 web browser.
+ * PROJECT: 	Randomator: A builder and pseudo random number generator for
+ * 					Servrian and Maze.
  *
- * AUTHOR:	  Brian Mayer blmayer@icloud.com
+ * AUTHOR:	  	Brian Mayer blmayer@icloud.com
  *
  * Copyright (C) 2018	Brian Lee Mayer
  *
@@ -25,7 +26,10 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
+#include "libweb.h"
 #include "key.h"
 
 unsigned char *get_header(int conn){
@@ -36,7 +40,7 @@ unsigned char *get_header(int conn){
 	unsigned char *dest;
 
 	/* This is a loop that will read the data coming from our connection */
-	while(read(tcp_server, buffer + pos, 1) == 1){
+	while(read(conn, buffer + pos, 1) == 1){
 		
 		/* Increase pos by 1 to follow the buffer size */
 		pos++;
@@ -61,15 +65,15 @@ unsigned char *get_header(int conn){
 	return strdup(dest);
 }
 
-unsigned char *create_header(struct request req, int encrypted){
-    
-    /* URL request line, includes version, spaces and \r\n */
-    int header_size = strlen(req.type) + strlen(req.url) + 12;
+unsigned char *create_req_header(struct request req, int encrypted){
+	
+	/* URL request line, includes version, spaces and \r\n */
+	int header_size = strlen(req.type) + strlen(req.url) + 12;
 
 	/* Host, user agent and conn lines */
 	header_size += strlen(req.host) + strlen(req.user) + strlen(req.conn) + 6;
 	
-    /* Accept line */
+	/* Accept line */
 	header_size += strlen(req.cenc) + 2;
 	
 	/* And optional lines */
@@ -80,12 +84,12 @@ unsigned char *create_header(struct request req, int encrypted){
 		header_size += strlen(req.key) + 7;
 	}
 	
-    /* The header string, +1 for the end zero and +2 for blank line */
-    unsigned char header[header_size + 46];
+	/* The header string, +1 for the end zero and +2 for blank line */
+	unsigned char header[header_size + 46];
 	
 	/* Copy all parameters to it */
-    sprintf(header, "%s %s HTTP/%s\r\n", req.type, req.url, req.vers);
-    sprintf(header + strlen(header), "Host: %s\r\n", req.host);
+	sprintf(header, "%s %s HTTP/%s\r\n", req.type, req.url, req.vers);
+	sprintf(header + strlen(header), "Host: %s\r\n", req.host);
 	sprintf(header + strlen(header), "User-Agent: %s\r\n", req.user);
 	sprintf(header + strlen(header), "Connection: %s\r\n", req.conn);
 	sprintf(header + strlen(header), "Accept: %s\r\n", req.cenc);
@@ -96,13 +100,141 @@ unsigned char *create_header(struct request req, int encrypted){
 		sprintf(header + strlen(header), "Key: %s\r\n", req.key);
 	}
 	
-    if(encrypted){
-        strcpy(header, encode(header));
-    }
+	if(encrypted){
+		strcpy(header, encode(header));
+	}
 
 	/* Add blank line */
 	sprintf(header + strlen(header), "\r\n");
 	
-    return strdup(header);
+	return strdup(header);
+}
+
+char *URL_path(char *url, char *PATH){
+
+	char *proto;
+	char *path;
+
+	/* Try to match cases http://domain... and //domain... in URL */
+	proto = strstr(url, "//");
+	if(proto == NULL){
+		/* URL is like file... or /file..., check if it starts with / */
+		if(url[0] == '/'){
+			path = url + 1;
+		} else {
+			path = url;
+		}
+	} else {
+		/* Advance to next / to get the domain */
+		strtok(proto + 2, "/");
+		
+		/* Get the path after the / */
+		path = strtok(NULL, "");
+	}
+
+	/* Remove ../ from the path for security */
+	char *temp;
+
+check:
+	if(path != NULL){
+		temp = strstr(path, "../");
+		if(temp != NULL){
+			path = temp + 3;
+			goto check;
+		}
+	} else {
+		return strdup(PATH);
+	}
+
+	/* If / was passed, redirect to index page */
+	if(strcmp(path, "") == 0){
+		path = "index.html";
+	}
+
+	/* Prepend webpages path to the path */
+	char prep[strlen(path) + strlen(PATH) + 1];
+	strcpy(prep, PATH);
+	strcat(prep, path);
+
+	return strdup(prep);
+}
+
+unsigned char *create_res_header(struct response res, int encrypted){
+	
+	/* URL resuest line, includes version, spaces and \r\n */
+	int header_size = strlen(res.type) + strlen(res.path) + 12;
+
+	/* Host, auth agent and conn lines */
+	header_size += strlen(res.serv) + strlen(res.auth) + strlen(res.conn) + 6;
+	
+	/* Accept line */
+	header_size += strlen(res.cenc) + 2;
+	
+	/* And optional lines */
+	if(res.auth != NULL){
+		header_size += strlen(res.auth) + 17;
+	}
+	if(res.key != NULL){
+		header_size += strlen(res.key) + 7;
+	}
+	
+	/* The header string, +1 for the end zero and +2 for blank line */
+	unsigned char header[header_size + 46];
+	
+	/* Copy all parameters to it */
+	sprintf(header, "%s %s HTTP/%s\r\n", res.type, res.path, res.vers);
+	sprintf(header + strlen(header), "Host: %s\r\n", res.serv);
+	sprintf(header + strlen(header), "User-Agent: %s\r\n", res.auth);
+	sprintf(header + strlen(header), "Connection: %s\r\n", res.conn);
+	sprintf(header + strlen(header), "Accept: %s\r\n", res.cenc);
+	if(res.auth != NULL){
+		sprintf(header + strlen(header), "Authorization: %s\r\n", res.auth);
+	}
+	if(res.key != NULL){
+		sprintf(header + strlen(header), "Key: %s\r\n", res.key);
+	}
+	
+	if(encrypted){
+		strcpy(header, encode(header));
+	}
+
+	/* Add blank line */
+	sprintf(header + strlen(header), "\r\n");
+	
+	return strdup(header);
+}
+
+unsigned char *encode(unsigned char *message){
+
+	/* Get length of received message */
+	int n = strlen(message) + 1;		/* Add the terminating zero place */
+	int i = 0;
+	unsigned char cipher[n];
+	
+	while(i < n){
+		cipher[i] = (message[i] ^ KEY[i % 512]) + 1;	/* +1 to never get 0 */
+		i++;
+	}
+
+	cipher[n] = 0;	  /* Add terminating zero */
+	return strdup(cipher);
+}
+
+unsigned char *decode(unsigned char *cipher){
+
+	/* Get length of received message */
+	int n = strlen(cipher) + 1;		/* Add the terminating zero place */
+	int i = 0;
+
+	unsigned char message[n];
+	
+	while(i < n){
+		message[i] = (cipher[i] - 1) ^ KEY[i % 512];
+		i++;
+	}
+
+	message[n] = 0;	  /* Add terminating zero */
+
+	return strdup(message);
 }
 
