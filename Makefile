@@ -16,42 +16,39 @@ else
 	KEYGEN = randomator
 	ifeq ($(ARCH),Darwin)
 		CFLAGS = -I ./include -I /usr/local/opt/openssl/include
-		LFLAGS = 
 	else
 		CFLAGS = -I ./include
-		LFLAGS = -L lib -lm -lcrypto -lweb
 	endif
 endif
 
 # set directories for search dependencies
-vpath %.h 	./include
-vpath %.c 	./src
-vpath %.o 	./obj
-vpath %.so 	./lib
+vpath %.h 	include
+vpath %.c 	src
+vpath %.so 	lib
 
 # compile randomator
-$(KEYGEN): randomator.o
+$(KEYGEN): obj/randomator.o
 	@if test ! -d $(KEYGENDIR); then mkdir -p $(KEYGENDIR); fi
 	$(CC) $^ -o $(KEYGENDIR)/$@
 	@echo "Done."
 
-%.o: %.c
+obj/%.o: %.c
 	@if test ! -d obj; then mkdir obj; fi
 	@echo "Compiling $<..."
-	$(CC) $(CFLAGS) -c $< -o obj/$@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 # create shared libraries
 .PHONY: libs
 
 libs: libweb.so
 
-libweb.so: web.o
-	$(CC) $(CFLAGS) -shared -fPIC $< -o lib/$@ $(LFLAGS)
+libweb.so: obj/web.o
+	$(CC) $(CFLAGS) -shared -fPIC $< -o lib/$@
 
-%.o: %.c
+obj/web.o: web.c
 	@if test ! -d obj; then mkdir obj; fi
 	@echo "Compiling $<..."
-	$(CC) $(CFLAGS) -fPIC -c $< -o obj/$@
+	$(CC) $(CFLAGS) -fPIC -c $< -o $@
 
 # install shared libs
 .PHONY: libs-install
