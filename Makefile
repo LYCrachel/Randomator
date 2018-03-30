@@ -8,16 +8,37 @@
 ifeq ($(OS),Windows_NT)
 	KEYGENDIR = bin/Randomator/Windows_NT
 	KEYGEN = randomator.exe
-else
+	ARCH = Windows_NT
+else 
+	ARCH = $(shell uname -s)
 	KEYGENDIR = bin/Randomator/$(shell uname -s)
 	KEYGEN = randomator
+	ifeq ($(ARCH),Darwin)
+		CFLAGS = -I ./include -I /usr/local/opt/openssl/include
+	else
+		CFLAGS = -L lib -lm -lcrypto -lweb -I ./include
+	endif
 endif
 
 # compile randomator
-$(KEYGENDIR)/$(KEYGEN): src/*.c
+$(KEYGEN): obj/randomator.o
 	@if test ! -d $(KEYGENDIR); then mkdir -p $(KEYGENDIR); fi
-	$(CC) $^ -o $@
+	$(CC) $^ -o $(KEYGENDIR)/$@
 	@echo "Done."
+
+obj/%.o: src/%.c
+	@if test ! -d obj; then mkdir obj; fi
+	@echo "Compiling $<..."
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# create shared libraries
+libweb.so: obj/libweb.o
+	$(CC) -I ./include -shared -fPIC $< -o lib/$@
+
+obj/%.o: src/%.c
+	@if test ! -d obj; then mkdir obj; fi
+	@echo "Compiling $<..."
+	$(CC) $(CFLAGS) -fPIC -c $< -o $@
 
 # build projects
 all: 
@@ -51,6 +72,9 @@ clean:
 	$(RM) ../Maze/obj/*.o
 	@echo "Cleaning up Servrian..."
 	$(RM) ../Servrian/obj/*.o
+	@echo "Cleaning up Randomator..."
+	$(RM) obj/*.o
+	$(RM) lib/*.so
 
 # remove compilation and linking products
 distclean:
@@ -61,5 +85,6 @@ distclean:
 	$(RM) ../Servrian/obj/*.o
 	$(RM) -rf ../Servrian/bin/*
 	@echo "Cleaning up Randomator..."
-	$(RM) ../Randomator/obj/*.o
+	$(RM) obj/*.o
+	$(RM) lib/*.so
 	$(RM) -rf bin/*
