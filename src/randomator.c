@@ -28,6 +28,8 @@
 #include <stdio.h>
 
 int main(void){
+
+	/* These are the possible characters in our key */
 	char charset[77] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJK0123456789"
 					   ",./<>?`~[]{}|;:!@#$%^&*()-=_+";
 	
@@ -41,7 +43,7 @@ int main(void){
 	int i = 0;
 	unsigned int val;
 	while(i < 512){
-		fread(&val, 1, 1, source);
+		fread(&val, 1, 1, source); 	/* Only one byte is enough */
 		key[i] = charset[val % 76];
 		i++;
 	}
@@ -53,29 +55,18 @@ int main(void){
 	key[512] = 0;
 	
 	/* Now open the file and insert the key */
-	FILE *maze = fopen("../Maze/include/key.h", "r+");
+	FILE *keyfile = fopen("include/key.h", "r+");
 	
 	/* Check if file could be opened */
-	if(maze == NULL){
-		perror("Unable to open Maze key file");
+	if(keyfile == NULL){
+		perror("Unable to open key file");
 		return -1;
 	}
 	
-	fseek(maze, 130, SEEK_SET);
-	fprintf(maze, "%s", key);
-	fclose(maze);
-	
-	/* The same for Servrian */
-	FILE *servrian = fopen("../Servrian/include/key.h", "r+");
-	if(maze == NULL){
-		perror("Unable to open Servrian key file");
-		return -1;
-	}
-	
-	/* Check if file could be opened */
-	fseek(servrian, 130, SEEK_SET);
-	fprintf(servrian, "%s", key);
-	fclose(servrian);
+	/* Go to the correct position, write key and close */
+	fseek(keyfile, 130, SEEK_SET);
+	fprintf(keyfile, "%s", key);
+	fclose(keyfile);
 	
 	return 0;
 }
