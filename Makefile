@@ -26,6 +26,7 @@ endif
 # set directories for search dependencies
 vpath %.h 	./include
 vpath %.c 	./src
+vpath %.o 	./obj
 vpath %.so 	./lib
 
 # compile randomator
@@ -68,9 +69,8 @@ all: $(KEYGEN) libweb.so
 	@echo "Building projects."
 	test ! -d build; then VER = $(cat build); fi
 	@echo "	Create backups of key.h"
-	cp ../Maze/include/key{.h,-old.h}
-	cp ../Servrian/include/key{.h,-old.h}
-	@echo "	Injecting keys..."
+	cp include/key{.h,-old.h}
+	@echo "	Injecting key..."
 	exec $(KEYGENDIR)/$(KEYGEN)
 	@echo "	Making all for Maze"
 	include ../Maze/Makefile
@@ -78,9 +78,8 @@ all: $(KEYGEN) libweb.so
 	@echo "	Making all for Servrian"
 	include ../Servrian/Makefile
 	@echo "	Servrian built."
-	@echo "	Delete files with key and restore backups."
-	$(RM) ../Maze/include/key.h && mv ../Maze/include/key{-old.h,.h}	
-	$(RM) ../Servrian/include/key.h && mv ../Servrian/include/key{-old.h,.h}
+	@echo "	Delete file with key and restore backup."
+	mv include/key{-old.h,.h}
 	@echo "	Done."
 	@echo "Creating symlinks."
 	@if test ! -d bin/Maze; then mkdir bin/Maze; fi
