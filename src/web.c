@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include "libweb.h"
+#include "web.h"
 #include "key.h"
 
 unsigned char *get_header(int conn){
