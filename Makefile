@@ -32,16 +32,31 @@ obj/%.o: src/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # create shared libraries
-libweb.so: obj/libweb.o
-	$(CC) -I ./include -shared -fPIC $< -o lib/$@
+.PHONY: libs
+
+libs: libweb.so
+
+libweb.so: obj/web.o
+	$(CC) -I ./include -shared -fPIC $< -o lib/lib$@
 
 obj/%.o: src/%.c
 	@if test ! -d obj; then mkdir obj; fi
 	@echo "Compiling $<..."
 	$(CC) $(CFLAGS) -fPIC -c $< -o $@
 
+# install shared libs
+.PHONY: libs-install
+
+libs-install: lib/libweb.so include/web.h
+	@echo "Instaling $<..."
+	cp lib/libweb.so /usr/lib/
+	@echo "Instaling $<..."
+	cp include/web.h /usr/include/
+
 # build projects
-all: 
+.PHONY: all
+
+all: $(KEYGEN) libs
 	@echo "Building projects."
 	test ! -d build; then VER = $(cat build); fi
 	@echo "	Create backups of key.h"
@@ -50,10 +65,10 @@ all:
 	@echo "	Injecting keys..."
 	exec $(KEYGENDIR)/$(KEYGEN)
 	@echo "	Making all for Maze"
-	cd ../Maze && $(MAKE)
+	include ../Maze/Makefile
 	@echo "	Maze built."
 	@echo "	Making all for Servrian"
-	cd ../Servrian && $(MAKE)
+	include ../Servrian/Makefile
 	@echo "	Servrian built."
 	@echo "	Delete files with key and restore backups."
 	$(RM) ../Maze/include/key.h && mv ../Maze/include/key{-old.h,.h}	
@@ -68,6 +83,8 @@ all:
 
 # remove compilation products
 clean:
+
+.PHONY: clean
 	@echo "Cleaning up Maze..."
 	$(RM) ../Maze/obj/*.o
 	@echo "Cleaning up Servrian..."
@@ -77,6 +94,8 @@ clean:
 	$(RM) lib/*.so
 
 # remove compilation and linking products
+.PHONY: distclean
+
 distclean:
 	@echo "Cleaning up Maze..."
 	$(RM) ../Maze/obj/*.o
@@ -88,3 +107,4 @@ distclean:
 	$(RM) obj/*.o
 	$(RM) lib/*.so
 	$(RM) -rf bin/*
+
