@@ -5,6 +5,7 @@
 # Currently we are compiling some object files (.o) from header files (.h),
 # which are then linked to create the final binaries.
 
+# check some system's particularyties
 ifeq ($(OS),Windows_NT)
 	KEYGENDIR = bin/Randomator/Windows_NT
 	KEYGEN = randomator.exe
@@ -15,18 +16,25 @@ else
 	KEYGEN = randomator
 	ifeq ($(ARCH),Darwin)
 		CFLAGS = -I ./include -I /usr/local/opt/openssl/include
+		LFLAGS = 
 	else
-		CFLAGS = -L lib -lm -lcrypto -lweb -I ./include
+		CFLAGS = -I ./include
+		LFLAGS = -L lib -lm -lcrypto -lweb
 	endif
 endif
 
+# set directories for search dependencies
+vpath %.h 	./include
+vpath %.c 	./src
+vpath %.so 	./lib
+
 # compile randomator
-$(KEYGEN): obj/randomator.o
+$(KEYGEN): randomator.o
 	@if test ! -d $(KEYGENDIR); then mkdir -p $(KEYGENDIR); fi
 	$(CC) $^ -o $(KEYGENDIR)/$@
 	@echo "Done."
 
-obj/%.o: src/%.c
+%.o: %.c
 	@if test ! -d obj; then mkdir obj; fi
 	@echo "Compiling $<..."
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -36,10 +44,10 @@ obj/%.o: src/%.c
 
 libs: libweb.so
 
-libweb.so: obj/web.o
-	$(CC) -I ./include -shared -fPIC $< -o lib/lib$@
+libweb.so: web.o
+	$(CC) $(CFLAGS) -shared -fPIC $< -o lib/$@ $(LFLAGS)
 
-obj/%.o: src/%.c
+%.o: %.c
 	@if test ! -d obj; then mkdir obj; fi
 	@echo "Compiling $<..."
 	$(CC) $(CFLAGS) -fPIC -c $< -o $@
@@ -47,7 +55,7 @@ obj/%.o: src/%.c
 # install shared libs
 .PHONY: libs-install
 
-libs-install: lib/libweb.so include/web.h
+libs-install: libweb.so web.h
 	@echo "Instaling $<..."
 	cp lib/libweb.so /usr/lib/
 	@echo "Instaling $<..."
@@ -56,7 +64,7 @@ libs-install: lib/libweb.so include/web.h
 # build projects
 .PHONY: all
 
-all: $(KEYGEN) libs
+all: $(KEYGEN) libweb.so
 	@echo "Building projects."
 	test ! -d build; then VER = $(cat build); fi
 	@echo "	Create backups of key.h"
@@ -82,9 +90,9 @@ all: $(KEYGEN) libs
 	@echo "All done."
 
 # remove compilation products
-clean:
-
 .PHONY: clean
+
+clean:
 	@echo "Cleaning up Maze..."
 	$(RM) ../Maze/obj/*.o
 	@echo "Cleaning up Servrian..."
