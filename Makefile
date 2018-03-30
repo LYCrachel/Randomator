@@ -37,7 +37,7 @@ $(KEYGEN): randomator.o
 %.o: %.c
 	@if test ! -d obj; then mkdir obj; fi
 	@echo "Compiling $<..."
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o obj/$@
 
 # create shared libraries
 .PHONY: libs
@@ -50,7 +50,7 @@ libweb.so: web.o
 %.o: %.c
 	@if test ! -d obj; then mkdir obj; fi
 	@echo "Compiling $<..."
-	$(CC) $(CFLAGS) -fPIC -c $< -o $@
+	$(CC) $(CFLAGS) -fPIC -c $< -o obj/$@
 
 # install shared libs
 .PHONY: libs-install
