@@ -1,34 +1,35 @@
 # Randomator
-> A builder and pseudo random string generator for Servrian and Maze. I plan to make it transparent and safe to generate a key, insert it in the code and build the project, so no one can ever see the key used.
+> A builder and pseudo random string generator for Servrian and Maze (two projects of the maintainer). The Randomator is planned to be transparent and safe to generate a key. By inserting it in the code and build the project, no one could see the key used.
 
 ##  How to use this
 
-This piece of code is meant to automate the build of Servrian and Maze, two projects of mine, by generating pseudo random strings, a shared library, libweb.so, and running build scripts.
+This project will automatically build of Servrian and Maze by generating pseudo random strings, a shared library *libweb.so*, and running the built scripts.
 
 ### Build Randomator
 
-To buid this project is enough to enter its folder and issue `make`.
+Run command `make` under project's directory.
 
 ### Build to shared libraries
 
-This will build libweb.so, just run `make libs`. If you with to install it to your system, so you don't need to mess with search paths run `make libs-install`.
+Run `make libs` to build *libweb.so*. If you wish to install it to your system, run `make libs-install` instead.
 
 ### Build Servrian and Maze
 
-To build both projects libweb.so must exist in the system, if you didn't build it see the previous section. Servrian and Maze must be built together, otherwise they won't share the same key and won't work correctly, to buid enter the _Randomator_ folder and issue `make all`.
+* To build both projects, *libweb.so* must have been installed (see the previous section). 
+* Servrian and Maze must be built together, otherwise they will not share the same key and not work correctly, to buid issue `make all`  under the _Randomator_ folder.
 
 ## Requirements
 
-This project must be placed together with Servrian and Maze, under the same folder. To build Randomator and the shared libraries the requirements are the following:
+This project must be placed under the same folder with Servrian and Maze. To build Randomator and the shared libraries the requirements are the following:
 
-- Make; &
+- Make; 
 - A C compiler.
 
 For Servrian and Maze please visit their pages.
 
 ## Current work
 
-- Creating version information; &
+- Creating version information; 
 - Automating the creation of encryption keys.
 
 ## To-do
