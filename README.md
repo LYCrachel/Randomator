@@ -3,7 +3,7 @@
 
 ##  How to use this
 
-This project will automatically build Servrian and Maze by generating pseudo random strings, a shared library *libweb.so*, and running the built scripts.
+This project will automatically build for Servrian and Maze by generating pseudo random strings, a shared library *libweb.so*, and running the build scripts.
 
 ### Build Randomator
 
